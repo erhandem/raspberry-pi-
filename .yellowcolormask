@@ -1,0 +1,39 @@
+import cv2                                                                #Gerekli kütüphaneler dahil ediliyor
+import numpy as np
+
+a=0
+
+
+cap = cv2.VideoCapture(0)
+_, img = cap.read()
+cv2.imwrite("kamera_foto_adi.jpg",img)
+
+img = cv2.imread('kamera_foto_adi.jpg', )
+frame = cv2.imread('kamera_foto_adi.jpg', )
+
+hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)                                    # burada sarı ayarlanan sarı ton rengini maskelyoruz
+
+lower_sari = np.array([ 30, 50, 50])                                          # sarı ton rengini endüşük rgb si
+upper_sari = np.array([45,255,255])                                             # sarı ton rengini en buyuk rgb değeri
+
+mask = cv2.inRange(hsv, lower_sari, upper_sari)                                # ayarlanan rgb değerlei arasını maskeliyor
+
+cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]
+center = None
+
+if len(cnts) > 1:                                                                 #Şekillerin ağılık merkezi etrafına daire çizilir ve merkezden nekadar uzakta olduğu hesaplanıp perspektif ile düzeltilen görünütününüzerineyazdırılır
+    c = max(cnts, key=cv2.contourArea)
+    ((x, y), radius) = cv2.minEnclosingCircle(c)
+    M = cv2.moments(c)
+    center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+    if radius > 2:
+        cv2.circle(frame, (int(x), int(y)), int(radius+3),(255, 0, 0), 2)
+        cv2.circle(frame, center, 3, (0, 0, 255), -1)
+        a = 1
+
+cv2.imshow('merkez_bulma', frame)                          #İlk çekilen fotoğraf, perspektif ile düzeltilen fotoğraf ve üzerine bilgiler yazdırılan fotoğraf gösterilir
+cv2.imshow('maskenmi_goruntu', mask)
+
+
+cv2.waitKey(0)
+cv2.destroyAllWindows ()
